@@ -16,9 +16,9 @@ if game.PlaceId == 6875469709 or game.PlaceId == 7215881810 then
     -- Kavo UI
     local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
 
-    -- Centramos la UI manualmente
+    -- Centrar la UI manualmente
     local function overridePosition()
-        task.wait(1) -- Esperamos a que cargue
+        task.wait(1)
         for _, gui in ipairs(PlayerGui:GetChildren()) do
             if gui:FindFirstChild("Main") then
                 local main = gui.Main
@@ -38,7 +38,12 @@ if game.PlaceId == 6875469709 or game.PlaceId == 7215881810 then
     -- Variables
     local playerPart = player.Character:WaitForChild("HumanoidRootPart")
     local currentWorld = player.leaderstats.WORLD.Value
-    local autoPet, esp, noclip, autoWorld = false, false, false, false
+    local autoPet = false
+    local autoPetThread = nil
+    local autoWorld = false
+    local autoWorldThread = nil
+    local esp = false
+    local noclip = false
     local collectDelay = 0.9
     local espSize = 1
     local espColor = Color3.fromRGB(0,170,255)
@@ -55,12 +60,18 @@ if game.PlaceId == 6875469709 or game.PlaceId == 7215881810 then
     local Main = MainTab:NewSection("Farming")
     Main:NewToggle("Auto Pet Upgrade", "Auto upgrade pet", function(s)
         autoPet = s
-        if s then spawn(function()
-            while autoPet do
-                Replicated.RemoteEvent:FireServer({{"UpgradeCurrentPet"}})
-                wait(0.2)
-            end
-        end) end
+        if s then
+            if autoPetThread then return end
+            autoPetThread = task.spawn(function()
+                while autoPet do
+                    Replicated.RemoteEvent:FireServer({{"UpgradeCurrentPet"}})
+                    task.wait(0.2)
+                end
+                autoPetThread = nil
+            end)
+        else
+            autoPet = false
+        end
     end)
 
     Main:NewToggle("Undetectable AutoFarm", "Collect orbs", function(s)
@@ -90,12 +101,18 @@ if game.PlaceId == 6875469709 or game.PlaceId == 7215881810 then
 
     Main:NewToggle("Auto World", "Switch worlds", function(s)
         autoWorld = s
-        if s then spawn(function()
-            while autoWorld do
-                Replicated.RemoteEvent:FireServer({{"WarpPlrToOtherMap","Next"}})
-                wait(0.3)
-            end
-        end) end
+        if s then
+            if autoWorldThread then return end
+            autoWorldThread = task.spawn(function()
+                while autoWorld do
+                    Replicated.RemoteEvent:FireServer({{"WarpPlrToOtherMap","Next"}})
+                    task.wait(0.3)
+                end
+                autoWorldThread = nil
+            end)
+        else
+            autoWorld = false
+        end
     end)
 
     -- Player Tab
@@ -144,7 +161,7 @@ if game.PlaceId == 6875469709 or game.PlaceId == 7215881810 then
     C:NewLabel("Script by deathgod0784")
     C:NewLabel("UI Library: Kavo by xHeptc")
 
-    -- Events
+    -- Eventos
     player.leaderstats.WORLD.Changed:Connect(function(v)
         currentWorld = v
     end)
